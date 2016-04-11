@@ -1,0 +1,44 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.itemis</groupId>
+    <artifactId>org-parent</artifactId>
+    <version>1-SNAPSHOT</version>
+  </parent>
+
+  <groupId>com.itemis.maven.plugins</groupId>
+  <artifactId>unleash-scm-provider-svn</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <name>Unleash SCM Provider SVN</name>
+  <description>The SVN SCM provider for the Unleash Maven Plugin.</description>
+
+  <properties>
+    <version.java>1.6</version.java>
+    <version.unleash-maven-plugin>0.1.0-SNAPSHOT</version.unleash-maven-plugin>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.itemis.maven.plugins</groupId>
+      <artifactId>unleash-maven-plugin-scm-provider-api</artifactId>
+      <version>${version.unleash-maven-plugin}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>${version.java}</source>
+            <target>${version.java}</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>
