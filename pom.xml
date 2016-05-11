@@ -15,15 +15,27 @@
   <description>The SVN SCM provider for the Unleash Maven Plugin.</description>
 
   <properties>
+    <version.guava>19.0</version.guava>
     <version.java>1.6</version.java>
     <version.unleash-maven-plugin>0.1.0-SNAPSHOT</version.unleash-maven-plugin>
+    <version.svnkit>1.8.12</version.svnkit>
   </properties>
 
   <dependencies>
-    <dependency>
+  <dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+    <version>${version.guava}</version>
+  </dependency>
+  <dependency>
       <groupId>com.itemis.maven.plugins</groupId>
       <artifactId>unleash-maven-plugin-scm-provider-api</artifactId>
       <version>${version.unleash-maven-plugin}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.tmatesoft.svnkit</groupId>
+      <artifactId>svnkit</artifactId>
+      <version>${version.svnkit}</version>
     </dependency>
   </dependencies>
 
