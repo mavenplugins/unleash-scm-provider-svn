@@ -17,17 +17,19 @@
   <properties>
     <version.guava>19.0</version.guava>
     <version.java>1.6</version.java>
+    <version.junit>4.12</version.junit>
+    <version.junit-dataprovider>1.10.3</version.junit-dataprovider>
     <version.unleash-maven-plugin>0.1.0-SNAPSHOT</version.unleash-maven-plugin>
     <version.svnkit>1.8.12</version.svnkit>
   </properties>
 
   <dependencies>
-  <dependency>
-    <groupId>com.google.guava</groupId>
-    <artifactId>guava</artifactId>
-    <version>${version.guava}</version>
-  </dependency>
-  <dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${version.guava}</version>
+    </dependency>
+    <dependency>
       <groupId>com.itemis.maven.plugins</groupId>
       <artifactId>unleash-maven-plugin-scm-provider-api</artifactId>
       <version>${version.unleash-maven-plugin}</version>
@@ -36,6 +38,21 @@
       <groupId>org.tmatesoft.svnkit</groupId>
       <artifactId>svnkit</artifactId>
       <version>${version.svnkit}</version>
+    </dependency>
+    
+    <!-- Test dependencies -->
+    
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${version.junit}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.tngtech.java</groupId>
+      <artifactId>junit-dataprovider</artifactId>
+      <version>${version.junit-dataprovider}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

@@ -1,4 +1,4 @@
-package com.itemis.maven.plugins.unleash.scm.providers.util;
+package com.itemis.maven.plugins.unleash.scm.providers.util.collection;
 
 import java.util.Map.Entry;
 import java.util.Set;
