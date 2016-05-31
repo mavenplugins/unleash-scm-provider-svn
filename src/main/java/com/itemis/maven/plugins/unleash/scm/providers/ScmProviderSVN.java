@@ -3,6 +3,8 @@ package com.itemis.maven.plugins.unleash.scm.providers;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -18,7 +20,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.itemis.maven.plugins.unleash.scm.ScmException;
 import com.itemis.maven.plugins.unleash.scm.ScmOperation;
@@ -27,22 +32,36 @@ import com.itemis.maven.plugins.unleash.scm.annotations.ScmProviderType;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNDirEntryNameChecker;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNUrlUtils;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNUtil;
+import com.itemis.maven.plugins.unleash.scm.providers.util.collection.FileToWCRelativePath;
 import com.itemis.maven.plugins.unleash.scm.providers.util.collection.SVNStatusToFile;
 import com.itemis.maven.plugins.unleash.scm.providers.util.collection.WCRelativePathToFile;
+import com.itemis.maven.plugins.unleash.scm.requests.BranchRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.CheckoutRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.DeleteBranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteTagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.TagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.UpdateRequest;
 
 @ScmProviderType("svn")
 public class ScmProviderSVN implements ScmProvider {
+  private static final String LOG_PREFIX = "SVN - ";
   private SVNClientManager clientManager;
   private File workingDir;
   private SVNUtil util;
+  private Logger log;
 
   @Override
-  public void initialize(File workingDirectory, Optional<String> username, Optional<String> password) {
+  public void initialize(File workingDirectory, Optional<Logger> logger, Optional<String> username,
+      Optional<String> password) {
+    if (workingDirectory.exists()) {
+      Preconditions.checkArgument(workingDirectory.isDirectory(),
+          "The configured working directory is not a directory!");
+    }
+
     this.workingDir = workingDirectory;
+    this.log = logger.or(Logger.getLogger(ScmProvider.class.getName()));
+
     if (username.isPresent()) {
       this.clientManager = SVNClientManager.newInstance(null, username.get(), password.get());
     } else {
@@ -58,13 +77,84 @@ public class ScmProviderSVN implements ScmProvider {
   }
 
   @Override
+  public void checkout(CheckoutRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Checking out from remote repository.");
+    }
+
+    String url = null;
+    if (request.checkoutBranch()) {
+      url = calculateBranchConnectionString(request.getRemoteRepositoryUrl(), request.getBranch().get());
+    } else if (request.checkoutTag()) {
+      url = calculateTagConnectionString(request.getRemoteRepositoryUrl(), request.getTag().get());
+    } else {
+      url = request.getRemoteRepositoryUrl();
+    }
+
+    // check if local working dir is empty
+    if (this.workingDir.exists() && this.workingDir.list().length > 0) {
+      throw new ScmException(ScmOperation.CHECKOUT, "Unable to checkout remote repository '" + url
+          + "'. Local working directory '" + this.workingDir.getAbsolutePath() + "' is not empty!");
+    }
+
+    SVNRevision revisionToCheckout = SVNUrlUtils.toSVNRevisionOrHEAD(request.getRevision());
+    SVNDepth checkoutDepth = request.checkoutWholeRepository() ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+
+    if (this.log.isLoggable(Level.FINE)) {
+      StringBuilder message = new StringBuilder(LOG_PREFIX + "Checkout info:\n");
+      message.append("\t- WORKING_DIR: ").append(this.workingDir.getAbsolutePath()).append('\n');
+      message.append("\t- URL: ").append(url).append('\n');
+      message.append("\t- REVISION: ").append(revisionToCheckout).append('\n');
+      message.append("\t- DEPTH: ").append(checkoutDepth);
+      if (!request.checkoutWholeRepository()) {
+        message.append("\n\t- FILES: ").append(Joiner.on(',').join(request.getPathsToCheckout()));
+      }
+      this.log.fine(message.toString());
+    }
+
+    try {
+      SVNUpdateClient updateClient = this.clientManager.getUpdateClient();
+      updateClient.setIgnoreExternals(false);
+      updateClient.doCheckout(SVNUrlUtils.toSVNURL(url), this.workingDir, revisionToCheckout, revisionToCheckout,
+          checkoutDepth, false);
+
+      if (!request.checkoutWholeRepository()) {
+        Collection<File> filesToUpdate = Collections2.transform(request.getPathsToCheckout(),
+            new WCRelativePathToFile(this.workingDir));
+        updateClient.doUpdate(filesToUpdate.toArray(new File[filesToUpdate.size()]), revisionToCheckout,
+            SVNDepth.INFINITY, false, false, true);
+      }
+
+      if (this.log.isLoggable(Level.INFO)) {
+        this.log.info(LOG_PREFIX + "Checkout finished successfully!");
+      }
+    } catch (SVNException e) {
+      throw new ScmException(ScmOperation.CHECKOUT,
+          "An error occurred during the checkout of the remote SVN repository: " + url, e);
+    }
+  }
+
+  @Override
   public String commit(CommitRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Committing to remote repository.");
+    }
+
     try {
       Collection<File> filesToCommit = this.util.getFilesToCommit(true, request.getPathsToCommit());
       if (!filesToCommit.isEmpty()) {
+        if (this.log.isLoggable(Level.FINE)) {
+          StringBuilder message = new StringBuilder(LOG_PREFIX + "Commit info:\n");
+          message.append("\t- WORKING_DIR: ").append(this.workingDir.getAbsolutePath()).append('\n');
+          message.append("\t- URL: ").append(this.util.getCurrentConnectionUrl()).append('\n');
+          message.append("\t- MERGE_STRATEGY: ").append(request.getMergeStrategy()).append('\n');
+          message.append("\t- FILES: ").append(
+              Joiner.on(',').join(Collections2.transform(filesToCommit, new FileToWCRelativePath(this.workingDir))));
+          this.log.fine(message.toString());
+        }
+
         // merge the outdated files (if collection is empty nothing happens)
         Collection<SVNStatus> outdatedFilesStati = this.util.getOutdatedFiles(filesToCommit);
-
         Optional<UpdateRequest> updateRequest = this.util.createUpdateRequestForFiles(
             Collections2.transform(outdatedFilesStati, SVNStatusToFile.INSTANCE), SVNRevision.HEAD,
             request.getMergeStrategy(), request.getMergeClient());
@@ -75,9 +165,19 @@ public class ScmProviderSVN implements ScmProvider {
         SVNCommitClient commitClient = this.clientManager.getCommitClient();
         SVNCommitInfo info = commitClient.doCommit(filesToCommit.toArray(new File[filesToCommit.size()]), true,
             request.getMessage(), null, null, true, true, SVNDepth.INFINITY);
-        return String.valueOf(info.getNewRevision());
+
+        long newRevision = info.getNewRevision();
+        if (this.log.isLoggable(Level.INFO)) {
+          this.log.info(LOG_PREFIX + "Checkout finished successfully. New remote revision is: " + newRevision);
+        }
+        return String.valueOf(newRevision);
       }
-      return getLocalRevision();
+
+      String localRevision = getLocalRevision();
+      if (this.log.isLoggable(Level.INFO)) {
+        this.log.info(LOG_PREFIX + "There was nothing to commit. Current revision is: " + localRevision);
+      }
+      return localRevision;
     } catch (SVNException e) {
       throw new ScmException(ScmOperation.COMMIT, "Could not commit changes to the remote SVN repository.", e);
     }
@@ -90,19 +190,31 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public String update(UpdateRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Updating local working copy.");
+    }
+
     try {
       SVNUpdateClient updateClient = this.clientManager.getUpdateClient();
       DefaultSVNOptions options = (DefaultSVNOptions) updateClient.getOptions();
       options.setConflictHandler(new SVNMergeConflictResolver(request.getMergeStrategy(), request.getMergeClient()));
       updateClient.setUpdateLocksOnDemand(true);
 
-      SVNRevision revision = SVNRevision.HEAD;
-      if (request.getTargetRevision().isPresent()) {
-        revision = SVNRevision.parse(request.getTargetRevision().get());
-      }
-
+      SVNRevision revision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getTargetRevision());
       Collection<File> filesToUpdate = Collections2.transform(request.getPathsToUpdate(),
           new WCRelativePathToFile(this.workingDir));
+
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Update info:\n");
+        message.append("\t- WORKING_DIR: ").append(this.workingDir.getAbsolutePath()).append('\n');
+        message.append("\t- URL: ").append(this.util.getCurrentConnectionUrl()).append('\n');
+        message.append("\t- MERGE_STRATEGY: ").append(request.getMergeStrategy());
+        if (!filesToUpdate.isEmpty()) {
+          message.append("\n\t- FILES: ").append(Joiner.on(',').join(request.getPathsToUpdate()));
+        }
+        this.log.fine(message.toString());
+      }
+
       long newRevision = -1;
       if (filesToUpdate.isEmpty()) {
         newRevision = updateClient.doUpdate(this.workingDir, revision, SVNDepth.INFINITY, true, false);
@@ -114,6 +226,10 @@ public class ScmProviderSVN implements ScmProvider {
         }
       }
 
+      if (this.log.isLoggable(Level.INFO)) {
+        this.log
+            .info(LOG_PREFIX + "Update of local working copy finished successfully. New revision is: " + newRevision);
+      }
       return String.valueOf(newRevision);
     } catch (SVNException e) {
       throw new ScmException(ScmOperation.UPDATE,
@@ -123,30 +239,63 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public String tag(TagRequest request) throws ScmException {
-    String currentUrl = this.util.getCurrentConnectionUrl();
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Creating SVN tag.");
+    }
+
+    // take the requested URL and the URL of the working dir as a fallback
+    String url = request.tagFromWorkingCopy() ? this.util.getCurrentConnectionUrl()
+        : request.getRemoteRepositoryUrl().get();
+
     SVNCopySource source;
-    if (request.commitBeforeTagging()) {
-      // 1. commit the changes (no merging!
-      CommitRequest cr = CommitRequest.builder().message(request.getPreTagCommitMessage()).noMerge().build();
-      String newRevision = commit(cr);
+    if (request.tagFromWorkingCopy()) {
+      if (request.commitBeforeTagging()) {
+        // 1. commit the changes (no merging!)
+        CommitRequest cr = CommitRequest.builder().message(request.getPreTagCommitMessage()).noMerge().build();
+        String newRevision = commit(cr);
 
-      // 2. set the source to the remote url with the new revision from the commit
-      SVNRevision tagRevision = SVNRevision.parse(newRevision);
-      source = new SVNCopySource(tagRevision, tagRevision, SVNUrlUtils.toSVNURL(currentUrl));
+        // 2. set the source to the remote url with the new revision from the commit
+        SVNRevision tagRevision = SVNUrlUtils.toSVNRevisionOrHEAD(Optional.of(newRevision));
+        source = new SVNCopySource(tagRevision, tagRevision, SVNUrlUtils.toSVNURL(url));
+      } else {
+        // 1. add all unversioned files (utility method is able to do that implicitly)
+        this.util.getFilesToCommit(true, Collections.<String> emptySet());
+
+        // 2. set the source to the local working copy with local revisions
+        source = new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, this.workingDir);
+      }
     } else {
-      // 1. add all unversioned files (utility method is able to do that implicitly)
-      this.util.getFilesToCommit(true, Collections.<String> emptySet());
-
-      // 2. set the source to the local working copy with local revisions
-      source = new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, this.workingDir);
+      SVNRevision revision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getRevision());
+      source = new SVNCopySource(revision, revision, SVNUrlUtils.toSVNURL(url));
     }
 
     try {
-      String tagUrl = calculateTagConnectionString(currentUrl, request.getTagName());
+      String tagUrl = calculateTagConnectionString(url, request.getTagName());
+
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Tag info:\n");
+        message.append("\t- TAG_NAME: ").append(request.getTagName()).append('\n');
+        message.append("\t- TAG_URL: ").append(tagUrl).append('\n');
+        if (request.tagFromWorkingCopy()) {
+          message.append("\t- TAG_SOURCE: WORKING_COPY (").append(url).append(")\n");
+          message.append("\t- COMMIT_BEFORE: ").append(request.commitBeforeTagging());
+        } else {
+          message.append("\t- TAG_SOURCE: ").append(url).append('\n');
+          message.append("\t- REVISION: ").append(request.getRevision());
+        }
+        this.log.fine(message.toString());
+      }
+
       SVNCopyClient copyClient = this.clientManager.getCopyClient();
       SVNCommitInfo info = copyClient.doCopy(new SVNCopySource[] { source }, SVNUrlUtils.toSVNURL(tagUrl), false, true,
           true, request.getMessage(), null);
-      return String.valueOf(info.getNewRevision());
+
+      long newRevision = info.getNewRevision();
+      if (this.log.isLoggable(Level.INFO)) {
+        this.log
+            .info(LOG_PREFIX + "Tagging of remote repository finished successfully. New revision is: " + newRevision);
+      }
+      return String.valueOf(newRevision);
     } catch (SVNException e) {
       throw new ScmException(ScmOperation.TAG, "An error occurred during SVN tag creation.", e);
     }
@@ -154,9 +303,19 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public boolean hasTag(final String tagName) {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Searching SVN tag");
+    }
+
     SVNLogClient logClient = this.clientManager.getLogClient();
     String tagsUrl = SVNUrlUtils.getBaseTagsUrl(this.util.getCurrentConnectionUrl());
     try {
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Query info:\n");
+        message.append("\t- TAGS_FOLDER_URL: ").append(tagsUrl).append('\n');
+        message.append("\t- TAG_NAME: ").append(tagName);
+        this.log.fine(message.toString());
+      }
       SVNDirEntryNameChecker nameChecker = new SVNDirEntryNameChecker(tagName);
       logClient.doList(SVNUrlUtils.toSVNURL(tagsUrl), SVNRevision.HEAD, SVNRevision.HEAD, false, false, nameChecker);
       return nameChecker.isPresent();
@@ -168,14 +327,137 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public String deleteTag(DeleteTagRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Deleting SVN tag");
+    }
+
     SVNCommitClient commitClient = this.clientManager.getCommitClient();
     String tagUrl = calculateTagConnectionString(this.util.getCurrentConnectionUrl(), request.getTagName());
     try {
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Tag info:\n");
+        message.append("\t- TAG_NAME: ").append(request.getTagName()).append('\n');
+        message.append("\t- TAG_URL: ").append(tagUrl);
+        this.log.fine(message.toString());
+      }
       SVNCommitInfo info = commitClient.doDelete(new SVNURL[] { SVNUrlUtils.toSVNURL(tagUrl) }, request.getMessage());
       return String.valueOf(info.getNewRevision());
     } catch (SVNException e) {
-      throw new ScmException(ScmOperation.TAG,
+      throw new ScmException(ScmOperation.DELETE_TAG,
           "An error occurred during the deletion of the SVN tag '" + request.getTagName() + "'. SVN url: " + tagUrl, e);
+    }
+  }
+
+  @Override
+  public String branch(BranchRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Creating SVN branch.");
+    }
+
+    // take the requested URL and the URL of the working dir as a fallback
+    String url = request.branchFromWorkingCopy() ? this.util.getCurrentConnectionUrl()
+        : request.getRemoteRepositoryUrl().get();
+
+    SVNCopySource source;
+    if (request.branchFromWorkingCopy()) {
+      if (request.commitBeforeBranching()) {
+        // 1. commit the changes (no merging!)
+        CommitRequest cr = CommitRequest.builder().message(request.getPreBranchCommitMessage()).noMerge().build();
+        String newRevision = commit(cr);
+
+        // 2. set the source to the remote url with the new revision from the commit
+        SVNRevision branchRevision = SVNUrlUtils.toSVNRevisionOrHEAD(Optional.of(newRevision));
+        source = new SVNCopySource(branchRevision, branchRevision, SVNUrlUtils.toSVNURL(url));
+      } else {
+        // 1. add all unversioned files (utility method is able to do that implicitly)
+        this.util.getFilesToCommit(true, Collections.<String> emptySet());
+
+        // 2. set the source to the local working copy with local revisions
+        source = new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, this.workingDir);
+      }
+    } else {
+      SVNRevision revision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getRevision());
+      source = new SVNCopySource(revision, revision, SVNUrlUtils.toSVNURL(url));
+    }
+
+    try {
+      String branchUrl = calculateBranchConnectionString(url, request.getBranchName());
+
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Branch info:\n");
+        message.append("\t- BRANCH_NAME: ").append(request.getBranchName()).append('\n');
+        message.append("\t- BRANCH_URL: ").append(branchUrl).append('\n');
+        if (request.branchFromWorkingCopy()) {
+          message.append("\t- BRANCH_SOURCE: WORKING_COPY (").append(url).append(")\n");
+          message.append("\t- COMMIT_BEFORE: ").append(request.commitBeforeBranching());
+        } else {
+          message.append("\t- BRANCH_SOURCE: ").append(url).append('\n');
+          message.append("\t- REVISION: ").append(request.getRevision());
+        }
+        this.log.fine(message.toString());
+      }
+
+      SVNCopyClient copyClient = this.clientManager.getCopyClient();
+      SVNCommitInfo info = copyClient.doCopy(new SVNCopySource[] { source }, SVNUrlUtils.toSVNURL(branchUrl), false,
+          true, true, request.getMessage(), null);
+
+      long newRevision = info.getNewRevision();
+      if (this.log.isLoggable(Level.INFO)) {
+        this.log
+            .info(LOG_PREFIX + "Branching of remote repository finished successfully. New revision is: " + newRevision);
+      }
+      return String.valueOf(newRevision);
+    } catch (SVNException e) {
+      throw new ScmException(ScmOperation.BRANCH, "An error occurred during SVN branch creation.", e);
+    }
+  }
+
+  @Override
+  public boolean hasBranch(String branchName) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Searching SVN branch");
+    }
+
+    SVNLogClient logClient = this.clientManager.getLogClient();
+    String branchesUrl = SVNUrlUtils.getBaseBranchesUrl(this.util.getCurrentConnectionUrl());
+    try {
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Query info:\n");
+        message.append("\t- BRANCHES_FOLDER_URL: ").append(branchesUrl).append('\n');
+        message.append("\t- BRANCH_NAME: ").append(branchName);
+        this.log.fine(message.toString());
+      }
+      SVNDirEntryNameChecker nameChecker = new SVNDirEntryNameChecker(branchName);
+      logClient.doList(SVNUrlUtils.toSVNURL(branchesUrl), SVNRevision.HEAD, SVNRevision.HEAD, false, false,
+          nameChecker);
+      return nameChecker.isPresent();
+    } catch (SVNException e) {
+      throw new ScmException(ScmOperation.BRANCH,
+          "An error occurred while querying the remote SVN repository for branch '" + branchName + "'.", e);
+    }
+  }
+
+  @Override
+  public String deleteBranch(DeleteBranchRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Deleting SVN branch");
+    }
+
+    SVNCommitClient commitClient = this.clientManager.getCommitClient();
+    String branchUrl = calculateBranchConnectionString(this.util.getCurrentConnectionUrl(), request.getBranchName());
+    try {
+      if (this.log.isLoggable(Level.FINE)) {
+        StringBuilder message = new StringBuilder(LOG_PREFIX + "Branch info:\n");
+        message.append("\t- BRANCH_NAME: ").append(request.getBranchName()).append('\n');
+        message.append("\t- BRANCH_URL: ").append(branchUrl);
+        this.log.fine(message.toString());
+      }
+      SVNCommitInfo info = commitClient.doDelete(new SVNURL[] { SVNUrlUtils.toSVNURL(branchUrl) },
+          request.getMessage());
+      return String.valueOf(info.getNewRevision());
+    } catch (SVNException e) {
+      throw new ScmException(ScmOperation.DELETE_BRANCH, "An error occurred during the deletion of the SVN branch '"
+          + request.getBranchName() + "'. SVN url: " + branchUrl, e);
     }
   }
 
@@ -206,12 +488,18 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public String calculateBranchConnectionString(String currentConnectionString, String branchName) {
-    return SVNUrlUtils.getBaseBranchesUrl(currentConnectionString) + "/" + branchName;
+    String baseUrl;
+    if (Objects.equal("trunk", branchName)) {
+      baseUrl = SVNUrlUtils.getBaseUrl(currentConnectionString);
+    } else {
+      baseUrl = SVNUrlUtils.getBaseBranchesUrl(currentConnectionString);
+    }
+    return baseUrl + "/" + branchName;
   }
 
   @Override
   public boolean isTagInfoIncludedInConnection() {
+    // because tag urls are ${REPO_BASE_URL}/tags/${TAG_NAME}
     return true;
   }
-
 }

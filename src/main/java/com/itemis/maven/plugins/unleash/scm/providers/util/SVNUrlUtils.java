@@ -2,7 +2,9 @@ package com.itemis.maven.plugins.unleash.scm.providers.util;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.itemis.maven.plugins.unleash.scm.ScmException;
 
@@ -46,5 +48,9 @@ public class SVNUrlUtils {
     } catch (SVNException e) {
       throw new ScmException("Unable to parse the following SVN conncetion URL: " + urlString);
     }
+  }
+
+  public static SVNRevision toSVNRevisionOrHEAD(Optional<String> revision) {
+    return SVNRevision.parse(revision.or(SVNRevision.HEAD.getName()));
   }
 }
