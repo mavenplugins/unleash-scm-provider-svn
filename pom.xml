@@ -31,7 +31,7 @@
     </dependency>
     <dependency>
       <groupId>com.itemis.maven.plugins</groupId>
-      <artifactId>unleash-maven-plugin-scm-provider-api</artifactId>
+      <artifactId>unleash-scm-provider-api</artifactId>
       <version>${version.unleash-maven-plugin}</version>
     </dependency>
     <dependency>
