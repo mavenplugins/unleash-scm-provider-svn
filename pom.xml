@@ -13,6 +13,29 @@
 
   <name>Unleash SCM Provider SVN</name>
   <description>The SVN SCM provider for the Unleash Maven Plugin.</description>
+  <url>https://github.com/shillner/unleash-scm-provider-svn</url>
+  <inceptionYear>2016</inceptionYear>
+  
+  <developers>
+    <developer>
+      <id>shillner</id>
+      <name>Stanley Hillner</name>
+      <organization>itemis AG</organization>
+      <organizationUrl>https://itemis.com/</organizationUrl>
+      <timezone>1</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/shillner/unleash-scm-provider-svn.git</connection>
+    <url>https://github.com/shillner/unleash-scm-provider-svn</url>
+    <tag>HEAD</tag>
+  </scm>
+  
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/shillner/unleash-scm-provider-svn/issues</url>
+  </issueManagement>
 
   <properties>
     <version.guava>19.0</version.guava>
