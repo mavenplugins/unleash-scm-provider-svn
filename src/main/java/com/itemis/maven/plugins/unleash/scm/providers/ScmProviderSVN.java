@@ -475,7 +475,7 @@ public class ScmProviderSVN implements ScmProvider {
   public String getLatestRemoteRevision() {
     try {
       SVNStatus status = this.clientManager.getStatusClient().doStatus(this.workingDir, true);
-      return String.valueOf(status != null ? status.getRevision().getNumber() : -1);
+      return String.valueOf(status != null ? status.getRemoteRevision().getNumber() : -1);
     } catch (SVNException e) {
       throw new IllegalStateException("Could not retrieve remote SVN revision", e);
     }
