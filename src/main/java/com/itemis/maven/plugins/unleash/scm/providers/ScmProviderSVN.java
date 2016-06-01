@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -40,6 +41,7 @@ import com.itemis.maven.plugins.unleash.scm.requests.CheckoutRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteBranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteTagRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.RevertCommitsRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.TagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.UpdateRequest;
 
@@ -462,6 +464,52 @@ public class ScmProviderSVN implements ScmProvider {
   }
 
   @Override
+  public String revertCommits(RevertCommitsRequest request) throws ScmException {
+    String latestRemoteRevision = getLatestRemoteRevision();
+    String from = request.getFromRevision();
+    String to = request.getToRevision();
+    int revisionDiff = from.compareTo(to);
+    if (revisionDiff == 0) {
+      // nothing to revert! return the latest remote version
+      return latestRemoteRevision;
+    } else if (revisionDiff < 0) {
+      // older from version (wrong direction!
+      throw new ScmException(ScmOperation.REVERT_COMMITS,
+          "Error reverting commits in remote repository. \"FROM\" revision (" + from
+              + ") is older than \"TO\" revision (" + to + ")");
+    } else if (latestRemoteRevision.compareTo(from) < 0 || latestRemoteRevision.compareTo(to) < 0) {
+      // older from version (wrong direction!
+      throw new ScmException(ScmOperation.REVERT_COMMITS,
+          "Error reverting commits in remote repository. \"FROM\" revision (" + from + ") or \"TO\" revision (" + to
+              + ") is newer than the head revision (" + latestRemoteRevision + ")");
+    }
+
+    // update to HEAD revision first then revert commits!
+    UpdateRequest updateRequest = UpdateRequest.builder().mergeStrategy(request.getMergeStrategy())
+        .mergeClient(request.getMergeClient().orNull()).build();
+    update(updateRequest);
+
+    SVNURL url = SVNUrlUtils.toSVNURL(this.util.getCurrentConnectionUrl());
+    SVNRevision toRevision = SVNUrlUtils.toSVNRevisionOrHEAD(Optional.of(to));
+    SVNRevision fromRevision = SVNUrlUtils.toSVNRevisionOrHEAD(Optional.of(from));
+
+    try {
+      SVNDiffClient diffClient = this.clientManager.getDiffClient();
+      DefaultSVNOptions options = (DefaultSVNOptions) diffClient.getOptions();
+      options.setConflictHandler(new SVNMergeConflictResolver(request.getMergeStrategy(), request.getMergeClient()));
+      diffClient.doMerge(url, fromRevision, url, toRevision, this.workingDir, SVNDepth.INFINITY, false, true, false,
+          false);
+    } catch (Exception e) {
+      throw new ScmException(ScmOperation.REVERT_COMMITS, "An error occurred during the reversion of some SVN commits.",
+          e);
+    }
+
+    CommitRequest commitRequest = CommitRequest.builder().merge().mergeClient(request.getMergeClient().orNull())
+        .message(request.getMessage()).build();
+    return commit(commitRequest);
+  }
+
+  @Override
   public String getLocalRevision() {
     try {
       SVNStatus status = this.clientManager.getStatusClient().doStatus(this.workingDir, false);
@@ -475,7 +523,8 @@ public class ScmProviderSVN implements ScmProvider {
   public String getLatestRemoteRevision() {
     try {
       SVNStatus status = this.clientManager.getStatusClient().doStatus(this.workingDir, true);
-      return String.valueOf(status != null ? status.getRemoteRevision().getNumber() : -1);
+      return String.valueOf(
+          status != null ? Math.max(status.getRemoteRevision().getNumber(), status.getRevision().getNumber()) : -1);
     } catch (SVNException e) {
       throw new IllegalStateException("Could not retrieve remote SVN revision", e);
     }
