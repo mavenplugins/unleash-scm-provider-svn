@@ -41,6 +41,7 @@ import com.itemis.maven.plugins.unleash.scm.requests.CheckoutRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteBranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteTagRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.PushRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.RevertCommitsRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.TagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.UpdateRequest;
@@ -170,7 +171,7 @@ public class ScmProviderSVN implements ScmProvider {
 
         long newRevision = info.getNewRevision();
         if (this.log.isLoggable(Level.INFO)) {
-          this.log.info(LOG_PREFIX + "Checkout finished successfully. New remote revision is: " + newRevision);
+          this.log.info(LOG_PREFIX + "Commit finished successfully. New remote revision is: " + newRevision);
         }
         return String.valueOf(newRevision);
       }
@@ -186,8 +187,9 @@ public class ScmProviderSVN implements ScmProvider {
   }
 
   @Override
-  public void push() throws ScmException {
+  public String push(PushRequest request) throws ScmException {
     // Nothing to do here since all modifying svn operations are remote by nature!
+    return getLatestRemoteRevision();
   }
 
   @Override
@@ -253,7 +255,9 @@ public class ScmProviderSVN implements ScmProvider {
     if (request.tagFromWorkingCopy()) {
       if (request.commitBeforeTagging()) {
         // 1. commit the changes (no merging!)
-        CommitRequest cr = CommitRequest.builder().message(request.getPreTagCommitMessage()).noMerge().build();
+        CommitRequest cr = CommitRequest.builder().message(
+            request.getPreTagCommitMessage().or("Preparation for tag creation (Name: '" + request.getTagName() + "')."))
+            .noMerge().build();
         String newRevision = commit(cr);
 
         // 2. set the source to the remote url with the new revision from the commit
@@ -465,6 +469,10 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public String revertCommits(RevertCommitsRequest request) throws ScmException {
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Reverting SVN commits");
+    }
+
     String latestRemoteRevision = getLatestRemoteRevision();
     String from = request.getFromRevision();
     String to = request.getToRevision();
@@ -482,6 +490,14 @@ public class ScmProviderSVN implements ScmProvider {
       throw new ScmException(ScmOperation.REVERT_COMMITS,
           "Error reverting commits in remote repository. \"FROM\" revision (" + from + ") or \"TO\" revision (" + to
               + ") is newer than the head revision (" + latestRemoteRevision + ")");
+    }
+
+    if (this.log.isLoggable(Level.FINE)) {
+      StringBuilder message = new StringBuilder(LOG_PREFIX).append("Commit info:\n");
+      message.append("\t- FROM: ").append(request.getFromRevision()).append('\n');
+      message.append("\t- TO: ").append(request.getToRevision()).append('\n');
+      message.append("\t- MERGE_STRATEGY: ").append(request.getMergeStrategy()).append('\n');
+      this.log.fine(message.toString());
     }
 
     // update to HEAD revision first then revert commits!
@@ -506,7 +522,13 @@ public class ScmProviderSVN implements ScmProvider {
 
     CommitRequest commitRequest = CommitRequest.builder().merge().mergeClient(request.getMergeClient().orNull())
         .message(request.getMessage()).build();
-    return commit(commitRequest);
+    String newRevision = commit(commitRequest);
+
+    if (this.log.isLoggable(Level.INFO)) {
+      this.log.info(LOG_PREFIX + "Revert finished successfully. New revision is: " + newRevision);
+    }
+
+    return newRevision;
   }
 
   @Override

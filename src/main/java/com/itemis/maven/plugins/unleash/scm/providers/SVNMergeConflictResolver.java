@@ -1,6 +1,7 @@
 package com.itemis.maven.plugins.unleash.scm.providers;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,8 +59,10 @@ public class SVNMergeConflictResolver implements ISVNConflictHandler {
               throw new SVNException(SVNErrorMessage.create(SVNErrorCode.UNKNOWN,
                   "Unable to merge remote and local changes due to missing merge client."));
             }
-            this.mergeClient.get().merge(mergeFiles.getLocalFile(), mergeFiles.getRepositoryFile(),
-                mergeFiles.getBaseFile(), fos);
+            FileInputStream local = new FileInputStream(mergeFiles.getLocalFile());
+            FileInputStream remote = new FileInputStream(mergeFiles.getRepositoryFile());
+            FileInputStream base = new FileInputStream(mergeFiles.getBaseFile());
+            this.mergeClient.get().merge(local, remote, base, fos);
           }
           choice = SVNConflictChoice.MERGED;
           mergedFile = mergeFiles.getResultFile();
