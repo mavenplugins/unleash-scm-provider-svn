@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.itemis.maven.plugins.unleash.scm.ScmException;
 
 public class SVNUrlUtils {
 
