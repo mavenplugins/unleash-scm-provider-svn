@@ -6,7 +6,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.itemis.maven.plugins.unleash.scm.ScmException;
 
 public class SVNUrlUtils {
 
@@ -46,7 +45,7 @@ public class SVNUrlUtils {
     try {
       return SVNURL.parseURIEncoded(urlString);
     } catch (SVNException e) {
-      throw new ScmException("Unable to parse the following SVN conncetion URL: " + urlString);
+      throw new ScmException("Unable to parse the following SVN connection URL: " + urlString);
     }
   }
 
