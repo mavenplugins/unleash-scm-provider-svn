@@ -144,7 +144,8 @@ public class ScmProviderSVN implements ScmProvider {
     }
 
     try {
-      Collection<File> filesToCommit = this.util.getFilesToCommit(true, request.getPathsToCommit());
+      Collection<File> filesToCommit = this.util.getFilesToCommit(request.includeUnstagedFiles(),
+          request.getPathsToCommit());
       if (!filesToCommit.isEmpty()) {
         if (this.log.isLoggable(Level.FINE)) {
           StringBuilder message = new StringBuilder(LOG_PREFIX + "Commit info:\n");
@@ -258,6 +259,9 @@ public class ScmProviderSVN implements ScmProvider {
         CommitRequest cr = CommitRequest.builder().message(
             request.getPreTagCommitMessage().or("Preparation for tag creation (Name: '" + request.getTagName() + "')."))
             .noMerge().build();
+        if (request.includeUnstagedFiles()) {
+          cr.includeUnstagedFiles();
+        }
         String newRevision = commit(cr);
 
         // 2. set the source to the remote url with the new revision from the commit
@@ -265,7 +269,7 @@ public class ScmProviderSVN implements ScmProvider {
         source = new SVNCopySource(tagRevision, tagRevision, SVNUrlUtils.toSVNURL(url));
       } else {
         // 1. add all unversioned files (utility method is able to do that implicitly)
-        this.util.getFilesToCommit(true, Collections.<String> emptySet());
+        this.util.getFilesToCommit(request.includeUnstagedFiles(), Collections.<String> emptySet());
 
         // 2. set the source to the local working copy with local revisions
         source = new SVNCopySource(SVNRevision.WORKING, SVNRevision.WORKING, this.workingDir);
