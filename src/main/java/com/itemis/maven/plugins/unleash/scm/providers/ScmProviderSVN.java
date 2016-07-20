@@ -39,6 +39,7 @@ import com.itemis.maven.plugins.unleash.scm.providers.util.collection.WCRelative
 import com.itemis.maven.plugins.unleash.scm.requests.BranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CheckoutRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest.Builder;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteBranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteTagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.PushRequest;
@@ -256,13 +257,13 @@ public class ScmProviderSVN implements ScmProvider {
     if (request.tagFromWorkingCopy()) {
       if (request.commitBeforeTagging()) {
         // 1. commit the changes (no merging!)
-        CommitRequest cr = CommitRequest.builder().message(
+        Builder builder = CommitRequest.builder().message(
             request.getPreTagCommitMessage().or("Preparation for tag creation (Name: '" + request.getTagName() + "')."))
-            .noMerge().build();
+            .noMerge();
         if (request.includeUntrackedFiles()) {
-          cr.includeUntrackedFiles();
+          builder.includeUntrackedFiles();
         }
-        String newRevision = commit(cr);
+        String newRevision = commit(builder.build());
 
         // 2. set the source to the remote url with the new revision from the commit
         SVNRevision tagRevision = SVNUrlUtils.toSVNRevisionOrHEAD(Optional.of(newRevision));
