@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -31,6 +32,7 @@ import com.itemis.maven.plugins.unleash.scm.ScmOperation;
 import com.itemis.maven.plugins.unleash.scm.ScmProvider;
 import com.itemis.maven.plugins.unleash.scm.annotations.ScmProviderType;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNDirEntryNameChecker;
+import com.itemis.maven.plugins.unleash.scm.providers.util.SVNHistoryLogEntryHandler;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNUrlUtils;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNUtil;
 import com.itemis.maven.plugins.unleash.scm.providers.util.collection.FileToWCRelativePath;
@@ -42,10 +44,12 @@ import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest.Builder;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteBranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteTagRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.HistoryRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.PushRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.RevertCommitsRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.TagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.UpdateRequest;
+import com.itemis.maven.plugins.unleash.scm.results.HistoryResult;
 
 @ScmProviderType("svn")
 public class ScmProviderSVN implements ScmProvider {
@@ -577,5 +581,56 @@ public class ScmProviderSVN implements ScmProvider {
   public boolean isTagInfoIncludedInConnection() {
     // because tag urls are ${REPO_BASE_URL}/tags/${TAG_NAME}
     return true;
+  }
+
+  @Override
+  // TODO logging!
+  public HistoryResult getHistory(final HistoryRequest request) throws ScmException {
+    String connectionUrl = null;
+    if (request.getRemoteRepositoryUrl().isPresent()) {
+      connectionUrl = request.getRemoteRepositoryUrl().get();
+    } else {
+      connectionUrl = this.util.getCurrentConnectionUrl();
+    }
+
+    SVNURL url = SVNUrlUtils.toSVNURL(connectionUrl);
+    SVNRevision startRevision = getTagRevisionOrDefault(request.getStartTag(), request.getStartRevision().or("0"));
+    SVNRevision endRevision = getTagRevisionOrDefault(request.getEndTag(),
+        request.getEndRevision().or(SVNRevision.HEAD.getName()));
+
+    try {
+      SVNHistoryLogEntryHandler handler = new SVNHistoryLogEntryHandler(request.getMessageFilters(),
+          request.getMaxResults());
+
+      if (request.getMessageFilters().isEmpty()) {
+        // if no filters are applied we can optimize the query and request only the limited number of entries
+        this.clientManager.getLogClient().doLog(url, null, null, startRevision, endRevision, false, false,
+            request.getMaxResults(), handler);
+      } else {
+        // if filters are applied we need to request the whole log and filter afterwards
+        this.clientManager.getLogClient().doLog(url, null, null, startRevision, endRevision, false, false, -1, handler);
+      }
+
+      return handler.getHistory();
+    } catch (SVNException e) {
+      throw new ScmException(ScmOperation.INFO, "Unable to retrieve the SVN log history.", e);
+    }
+  }
+
+  private SVNRevision getTagRevisionOrDefault(Optional<String> tag, String defaultRevision) {
+    String revision = defaultRevision;
+    if (tag.isPresent()) {
+      String tagConnectionString = calculateTagConnectionString(this.util.getCurrentConnectionUrl(), tag.get());
+      try {
+        SVNInfo info = this.clientManager.getWCClient().doInfo(SVNUrlUtils.toSVNURL(tagConnectionString), null,
+            SVNRevision.HEAD);
+        revision = Long.toString(info.getCommittedRevision().getNumber());
+      } catch (Exception e) {
+        throw new ScmException(ScmOperation.INFO, "Unable to get revision of the following URL: " + tagConnectionString,
+            e);
+      }
+    }
+    SVNRevision startRevision = SVNRevision.parse(revision);
+    return startRevision;
   }
 }
