@@ -42,7 +42,7 @@
     <version.java>1.6</version.java>
     <version.junit>4.12</version.junit>
     <version.junit-dataprovider>1.10.3</version.junit-dataprovider>
-    <version.unleash-maven-plugin>1.2.0-SNAPSHOT</version.unleash-maven-plugin>
+    <version.unleash-maven-plugin>1.2.0</version.unleash-maven-plugin>
     <version.svnkit>1.8.12</version.svnkit>
   </properties>
 
