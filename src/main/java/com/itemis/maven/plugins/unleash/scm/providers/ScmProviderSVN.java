@@ -250,7 +250,7 @@ public class ScmProviderSVN implements ScmProvider {
   @Override
   public String tag(TagRequest request) throws ScmException {
     if (this.log.isLoggable(Level.INFO)) {
-      this.log.info(LOG_PREFIX + "Creating SVN tag.");
+      this.log.info(LOG_PREFIX + "Creating SVN tag '" + request.getTagName() + "'");
     }
 
     // take the requested URL and the URL of the working dir as a fallback
@@ -319,7 +319,7 @@ public class ScmProviderSVN implements ScmProvider {
   @Override
   public boolean hasTag(final String tagName) {
     if (this.log.isLoggable(Level.INFO)) {
-      this.log.info(LOG_PREFIX + "Searching SVN tag");
+      this.log.info(LOG_PREFIX + "Searching SVN tag '" + tagName + "'");
     }
 
     SVNLogClient logClient = this.clientManager.getLogClient();
@@ -632,5 +632,9 @@ public class ScmProviderSVN implements ScmProvider {
     }
     SVNRevision startRevision = SVNRevision.parse(revision);
     return startRevision;
+  }
+
+  public void diff() {
+    this.clientManager.getDiffClient().dodif
   }
 }
