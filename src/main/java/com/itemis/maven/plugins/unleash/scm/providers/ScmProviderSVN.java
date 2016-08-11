@@ -31,11 +31,13 @@ import com.itemis.maven.plugins.unleash.scm.ScmException;
 import com.itemis.maven.plugins.unleash.scm.ScmOperation;
 import com.itemis.maven.plugins.unleash.scm.ScmProvider;
 import com.itemis.maven.plugins.unleash.scm.annotations.ScmProviderType;
+import com.itemis.maven.plugins.unleash.scm.providers.util.NullOutputStream;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNDirEntryNameChecker;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNHistoryLogEntryHandler;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNUrlUtils;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNUtil;
 import com.itemis.maven.plugins.unleash.scm.providers.util.collection.FileToWCRelativePath;
+import com.itemis.maven.plugins.unleash.scm.providers.util.collection.SVNDiffGenerator;
 import com.itemis.maven.plugins.unleash.scm.providers.util.collection.SVNStatusToFile;
 import com.itemis.maven.plugins.unleash.scm.providers.util.collection.WCRelativePathToFile;
 import com.itemis.maven.plugins.unleash.scm.requests.BranchRequest;
@@ -44,11 +46,14 @@ import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.CommitRequest.Builder;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteBranchRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.DeleteTagRequest;
+import com.itemis.maven.plugins.unleash.scm.requests.DiffRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.HistoryRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.PushRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.RevertCommitsRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.TagRequest;
 import com.itemis.maven.plugins.unleash.scm.requests.UpdateRequest;
+import com.itemis.maven.plugins.unleash.scm.results.DiffObject;
+import com.itemis.maven.plugins.unleash.scm.results.DiffResult;
 import com.itemis.maven.plugins.unleash.scm.results.HistoryResult;
 
 @ScmProviderType("svn")
@@ -634,7 +639,31 @@ public class ScmProviderSVN implements ScmProvider {
     return startRevision;
   }
 
-  public void diff() {
-    this.clientManager.getDiffClient().dodif
+  @Override
+  public DiffResult getDiff(final DiffRequest request) throws ScmException {
+    final SVNURL sourceUrl = SVNUrlUtils
+        .toSVNURL(request.getSourceRemoteRepositoryUrl().or(this.util.getCurrentConnectionUrl()));
+    final SVNURL targetUrl = SVNUrlUtils
+        .toSVNURL(request.getTargetRemoteRepositoryUrl().or(this.util.getCurrentConnectionUrl()));
+    final SVNRevision sourceRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getSourceRevision());
+    final SVNRevision targetRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getTargetRevision());
+
+    final DiffResult.Builder resultBuilder = DiffResult.builder();
+
+    try {
+      SVNDiffClient diffClient = this.clientManager.getDiffClient();
+      SVNDiffGenerator diffGenerator = new SVNDiffGenerator(request.getType());
+      diffClient.setDiffGenerator(diffGenerator);
+      diffClient.doDiff(sourceUrl, sourceRevision, targetUrl, targetRevision, SVNDepth.INFINITY, true,
+          new NullOutputStream());
+
+      for (DiffObject diff : diffGenerator.getDiffs()) {
+        resultBuilder.addDiff(diff);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    return resultBuilder.build();
   }
 }

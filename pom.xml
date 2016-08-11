@@ -42,7 +42,7 @@
     <version.java>1.6</version.java>
     <version.junit>4.12</version.junit>
     <version.junit-dataprovider>1.10.3</version.junit-dataprovider>
-    <version.unleash-maven-plugin>1.2.0</version.unleash-maven-plugin>
+    <version.unleash-scm-provider-api>1.3.0-SNAPSHOT</version.unleash-scm-provider-api>
     <version.svnkit>1.8.12</version.svnkit>
   </properties>
 
@@ -55,7 +55,7 @@
     <dependency>
       <groupId>com.itemis.maven.plugins</groupId>
       <artifactId>unleash-scm-provider-api</artifactId>
-      <version>${version.unleash-maven-plugin}</version>
+      <version>${version.unleash-scm-provider-api}</version>
     </dependency>
     <dependency>
       <groupId>org.tmatesoft.svnkit</groupId>
