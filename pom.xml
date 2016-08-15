@@ -42,7 +42,7 @@
     <version.java>1.6</version.java>
     <version.junit>4.12</version.junit>
     <version.junit-dataprovider>1.10.3</version.junit-dataprovider>
-    <version.unleash-scm-provider-api>1.3.0-SNAPSHOT</version.unleash-scm-provider-api>
+    <version.unleash-scm-provider-api>1.2.1</version.unleash-scm-provider-api>
     <version.svnkit>1.8.12</version.svnkit>
   </properties>
 
