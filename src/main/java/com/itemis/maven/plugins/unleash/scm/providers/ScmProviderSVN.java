@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.StringUtils;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -30,6 +31,7 @@ import com.google.common.collect.Collections2;
 import com.itemis.maven.plugins.unleash.scm.ScmException;
 import com.itemis.maven.plugins.unleash.scm.ScmOperation;
 import com.itemis.maven.plugins.unleash.scm.ScmProvider;
+import com.itemis.maven.plugins.unleash.scm.ScmProviderInitialization;
 import com.itemis.maven.plugins.unleash.scm.annotations.ScmProviderType;
 import com.itemis.maven.plugins.unleash.scm.providers.util.NullOutputStream;
 import com.itemis.maven.plugins.unleash.scm.providers.util.SVNDirEntryNameChecker;
@@ -65,18 +67,17 @@ public class ScmProviderSVN implements ScmProvider {
   private Logger log;
 
   @Override
-  public void initialize(File workingDirectory, Optional<Logger> logger, Optional<String> username,
-      Optional<String> password) {
-    if (workingDirectory.exists()) {
-      Preconditions.checkArgument(workingDirectory.isDirectory(),
+  public void initialize(ScmProviderInitialization initialization) {
+    this.workingDir = initialization.getWorkingDirectory();
+    if (this.workingDir.exists()) {
+      Preconditions.checkArgument(this.workingDir.isDirectory(),
           "The configured working directory is not a directory!");
     }
+    this.log = initialization.getLogger().or(Logger.getLogger(ScmProvider.class.getName()));
 
-    this.workingDir = workingDirectory;
-    this.log = logger.or(Logger.getLogger(ScmProvider.class.getName()));
-
-    if (username.isPresent()) {
-      this.clientManager = SVNClientManager.newInstance(null, username.get(), password.get());
+    if (initialization.getUsername().isPresent()) {
+      this.clientManager = SVNClientManager.newInstance(null, initialization.getUsername().get(),
+          initialization.getPassword().or(StringUtils.EMPTY));
     } else {
       this.clientManager = SVNClientManager.newInstance();
     }
