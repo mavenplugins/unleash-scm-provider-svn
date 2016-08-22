@@ -600,8 +600,9 @@ public class ScmProviderSVN implements ScmProvider {
     }
 
     SVNURL url = SVNUrlUtils.toSVNURL(connectionUrl);
-    SVNRevision startRevision = getTagRevisionOrDefault(request.getStartTag(), request.getStartRevision().or("0"));
-    SVNRevision endRevision = getTagRevisionOrDefault(request.getEndTag(),
+    SVNRevision startRevision = getTagRevisionOrDefault(connectionUrl, request.getStartTag(),
+        request.getStartRevision().or("0"));
+    SVNRevision endRevision = getTagRevisionOrDefault(connectionUrl, request.getEndTag(),
         request.getEndRevision().or(SVNRevision.HEAD.getName()));
 
     try {
@@ -623,10 +624,10 @@ public class ScmProviderSVN implements ScmProvider {
     }
   }
 
-  private SVNRevision getTagRevisionOrDefault(Optional<String> tag, String defaultRevision) {
+  private SVNRevision getTagRevisionOrDefault(String connectionUrl, Optional<String> tag, String defaultRevision) {
     String revision = defaultRevision;
     if (tag.isPresent()) {
-      String tagConnectionString = calculateTagConnectionString(this.util.getCurrentConnectionUrl(), tag.get());
+      String tagConnectionString = calculateTagConnectionString(connectionUrl, tag.get());
       try {
         SVNInfo info = this.clientManager.getWCClient().doInfo(SVNUrlUtils.toSVNURL(tagConnectionString), null,
             SVNRevision.HEAD);
