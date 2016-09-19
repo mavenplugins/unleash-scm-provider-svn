@@ -5,7 +5,10 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -154,5 +157,11 @@ public class SVNUtil {
     updateRequestBuilder.addPaths(relativePaths.toArray(new String[relativePaths.size()]));
 
     return Optional.of(updateRequestBuilder.build());
+  }
+  
+  public long getRemoteRevision(SVNURL remoteUrl) throws SVNException {
+    SVNRepository repository = clientManager.getRepositoryPool().createRepository(remoteUrl, true);
+    SVNDirEntry info = repository.info(".", -1);
+    return info.getRevision();
   }
 }

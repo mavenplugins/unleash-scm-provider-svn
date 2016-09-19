@@ -643,14 +643,32 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public DiffResult getDiff(final DiffRequest request) throws ScmException {
-    final SVNURL sourceUrl = SVNUrlUtils
+    SVNURL sourceUrl = SVNUrlUtils
         .toSVNURL(request.getSourceRemoteRepositoryUrl().or(this.util.getCurrentConnectionUrl()));
-    final SVNURL targetUrl = SVNUrlUtils
+    SVNURL targetUrl = SVNUrlUtils
         .toSVNURL(request.getTargetRemoteRepositoryUrl().or(this.util.getCurrentConnectionUrl()));
-    final SVNRevision sourceRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getSourceRevision());
-    final SVNRevision targetRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getTargetRevision());
+    
+    SVNRevision sourceRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getSourceRevision());
+    if(Objects.equal(SVNRevision.HEAD, sourceRevision)) {
+      try {
+        long rev = util.getRemoteRevision(sourceUrl);
+        sourceRevision = SVNRevision.parse(String.valueOf(rev));
+      } catch (SVNException e) {
+        log.fine("Could not determine remote revision of SVN URL '" + sourceUrl.toDecodedString() + "'. Using 'HEAD' instead to calculate the diff.");
+      }
+    }
+    
+    SVNRevision targetRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getTargetRevision());
+    if(Objects.equal(SVNRevision.HEAD, targetRevision)) {
+       try {
+         long rev = util.getRemoteRevision(targetUrl);
+         targetRevision = SVNRevision.parse(String.valueOf(rev));
+       } catch (SVNException e) {
+      	 log.fine("Could not determine remote revision of SVN URL '" + targetUrl.toDecodedString() + "'. Using 'HEAD' instead to calculate the diff.");
+       }
+     }
 
-    final DiffResult.Builder resultBuilder = DiffResult.builder();
+    DiffResult.Builder resultBuilder = DiffResult.builder();
 
     try {
       SVNDiffClient diffClient = this.clientManager.getDiffClient();
@@ -668,4 +686,6 @@ public class ScmProviderSVN implements ScmProvider {
 
     return resultBuilder.build();
   }
+  
+  
 }
