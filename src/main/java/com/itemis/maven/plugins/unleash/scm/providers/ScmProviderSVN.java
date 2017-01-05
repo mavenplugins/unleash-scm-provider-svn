@@ -68,6 +68,8 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public void initialize(ScmProviderInitialization initialization) {
+    disableKeyring();
+
     this.workingDir = initialization.getWorkingDirectory();
     if (this.workingDir.exists()) {
       Preconditions.checkArgument(this.workingDir.isDirectory(),
@@ -82,6 +84,10 @@ public class ScmProviderSVN implements ScmProvider {
       this.clientManager = SVNClientManager.newInstance();
     }
     this.util = new SVNUtil(this.clientManager, this.workingDir);
+  }
+
+  private void disableKeyring() {
+    System.setProperty("svnkit.library.gnome-keyring.enabled", "false");
   }
 
   @Override
@@ -647,26 +653,28 @@ public class ScmProviderSVN implements ScmProvider {
         .toSVNURL(request.getSourceRemoteRepositoryUrl().or(this.util.getCurrentConnectionUrl()));
     SVNURL targetUrl = SVNUrlUtils
         .toSVNURL(request.getTargetRemoteRepositoryUrl().or(this.util.getCurrentConnectionUrl()));
-    
+
     SVNRevision sourceRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getSourceRevision());
-    if(Objects.equal(SVNRevision.HEAD, sourceRevision)) {
+    if (Objects.equal(SVNRevision.HEAD, sourceRevision)) {
       try {
-        long rev = util.getRemoteRevision(sourceUrl);
+        long rev = this.util.getRemoteRevision(sourceUrl);
         sourceRevision = SVNRevision.parse(String.valueOf(rev));
       } catch (SVNException e) {
-        log.fine("Could not determine remote revision of SVN URL '" + sourceUrl.toDecodedString() + "'. Using 'HEAD' instead to calculate the diff.");
+        this.log.fine("Could not determine remote revision of SVN URL '" + sourceUrl.toDecodedString()
+            + "'. Using 'HEAD' instead to calculate the diff.");
       }
     }
-    
+
     SVNRevision targetRevision = SVNUrlUtils.toSVNRevisionOrHEAD(request.getTargetRevision());
-    if(Objects.equal(SVNRevision.HEAD, targetRevision)) {
-       try {
-         long rev = util.getRemoteRevision(targetUrl);
-         targetRevision = SVNRevision.parse(String.valueOf(rev));
-       } catch (SVNException e) {
-      	 log.fine("Could not determine remote revision of SVN URL '" + targetUrl.toDecodedString() + "'. Using 'HEAD' instead to calculate the diff.");
-       }
-     }
+    if (Objects.equal(SVNRevision.HEAD, targetRevision)) {
+      try {
+        long rev = this.util.getRemoteRevision(targetUrl);
+        targetRevision = SVNRevision.parse(String.valueOf(rev));
+      } catch (SVNException e) {
+        this.log.fine("Could not determine remote revision of SVN URL '" + targetUrl.toDecodedString()
+            + "'. Using 'HEAD' instead to calculate the diff.");
+      }
+    }
 
     DiffResult.Builder resultBuilder = DiffResult.builder();
 
@@ -686,6 +694,5 @@ public class ScmProviderSVN implements ScmProvider {
 
     return resultBuilder.build();
   }
-  
-  
+
 }
