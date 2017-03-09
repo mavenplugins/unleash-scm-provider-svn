@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -181,6 +182,13 @@ public class ScmProviderSVN implements ScmProvider {
             request.getMergeStrategy(), request.getMergeClient());
         if (updateRequest.isPresent()) {
           update(updateRequest.get());
+        }
+
+        SVNWCClient workingCopyClient = this.clientManager.getWCClient();
+        for (File file : filesToCommit) {
+          if (!file.exists()) {
+            workingCopyClient.doDelete(file, true, false);
+          }
         }
 
         SVNCommitClient commitClient = this.clientManager.getCommitClient();

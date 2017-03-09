@@ -78,9 +78,10 @@ public class SVNUtil {
     SVNStatusTypeMapEntryFilter filter;
     if (addUnversioned) {
       filter = new SVNStatusTypeMapEntryFilter(SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_ADDED,
-          SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_NONE);
+          SVNStatusType.STATUS_MISSING, SVNStatusType.STATUS_UNVERSIONED, SVNStatusType.STATUS_NONE);
     } else {
-      filter = new SVNStatusTypeMapEntryFilter(SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_ADDED);
+      filter = new SVNStatusTypeMapEntryFilter(SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_ADDED,
+          SVNStatusType.STATUS_MISSING);
     }
     Collection<File> filesToCommit = Multimaps.filterEntries(stati, filter).values();
 
@@ -91,7 +92,7 @@ public class SVNUtil {
     final Multimap<SVNStatusType, File> stati = HashMultimap.create();
     try {
       this.clientManager.getStatusClient().doStatus(this.workingDir, SVNRevision.WORKING, SVNDepth.INFINITY, false,
-          true, false, false, new ISVNStatusHandler() {
+          true, true, false, new ISVNStatusHandler() {
             @Override
             public void handleStatus(SVNStatus status) throws SVNException {
               File file = status.getFile();
@@ -106,7 +107,7 @@ public class SVNUtil {
               }
 
               if (include) {
-                stati.put(status.getContentsStatus(), file);
+                stati.put(status.getCombinedNodeAndContentsStatus(), file);
               }
             }
           }, null);
@@ -158,7 +159,7 @@ public class SVNUtil {
 
     return Optional.of(updateRequestBuilder.build());
   }
-  
+
   public long getRemoteRevision(SVNURL remoteUrl) throws SVNException {
     SVNRepository repository = clientManager.getRepositoryPool().createRepository(remoteUrl, true);
     SVNDirEntry info = repository.info(".", -1);
