@@ -575,7 +575,8 @@ public class ScmProviderSVN implements ScmProvider {
 
   @Override
   public String calculateTagConnectionString(String currentConnectionString, String tagName) {
-    return SVNUrlUtils.getBaseTagsUrl(currentConnectionString) + "/" + tagName;
+    return SVNUrlUtils.getBaseTagsUrl(currentConnectionString) + "/" + tagName
+        + SVNUrlUtils.getUrlSubPath(currentConnectionString);
   }
 
   @Override
@@ -586,7 +587,7 @@ public class ScmProviderSVN implements ScmProvider {
     } else {
       baseUrl = SVNUrlUtils.getBaseBranchesUrl(currentConnectionString);
     }
-    return baseUrl + "/" + branchName;
+    return baseUrl + "/" + branchName + SVNUrlUtils.getUrlSubPath(currentConnectionString);
   }
 
   @Override
