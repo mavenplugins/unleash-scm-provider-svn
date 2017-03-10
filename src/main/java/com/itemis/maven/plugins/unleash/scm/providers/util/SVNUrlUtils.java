@@ -6,6 +6,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -56,16 +57,22 @@ public class SVNUrlUtils {
     }
 
     List<String> split = Splitter.on(PATH_SEPARATOR).splitToList(currentUrl);
-    StringBuilder sb = new StringBuilder();
+    int startIndex = -1;
     for (int i = split.size() - 1; i >= 0; i--) {
       String segment = split.get(i);
-      if (PATH_SEGMENT_BRANCHES.equals(segment) || PATH_SEGMENT_TAGS.equals(segment)
-          || PATH_SEGMENT_TRUNK.equals(segment)) {
+      if (PATH_SEGMENT_TRUNK.equals(segment)) {
+        startIndex = i + 1;
+        break;
+      } else if (PATH_SEGMENT_BRANCHES.equals(segment) || PATH_SEGMENT_TAGS.equals(segment)) {
+        startIndex = i + 2;
         break;
       }
-      sb.insert(0, segment).insert(0, PATH_SEPARATOR);
     }
-    return sb.toString();
+
+    if (startIndex == -1 || startIndex >= split.size()) {
+      return "";
+    }
+    return "/" + Joiner.on('/').join(split.subList(startIndex, split.size()));
   }
 
   public static SVNURL toSVNURL(String urlString) throws ScmException, IllegalArgumentException {
