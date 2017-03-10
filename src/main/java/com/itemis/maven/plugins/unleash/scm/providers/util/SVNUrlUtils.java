@@ -50,6 +50,11 @@ public class SVNUrlUtils {
   }
 
   public static String getUrlSubPath(String currentUrl) {
+    if (!currentUrl.contains(SUBPATH_BRANCHES) && !currentUrl.contains(SUBPATH_TAGS)
+        && !currentUrl.contains(SUBPATH_TRUNK)) {
+      return "";
+    }
+
     List<String> split = Splitter.on(PATH_SEPARATOR).splitToList(currentUrl);
     StringBuilder sb = new StringBuilder();
     for (int i = split.size() - 1; i >= 0; i--) {
