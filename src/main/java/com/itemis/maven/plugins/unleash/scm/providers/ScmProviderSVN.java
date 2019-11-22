@@ -624,13 +624,16 @@ public class ScmProviderSVN implements ScmProvider {
       SVNHistoryLogEntryHandler handler = new SVNHistoryLogEntryHandler(request.getMessageFilters(),
           request.getMaxResults());
 
+      String[] paths = request.getPathFilters().toArray(new String[request.getPathFilters().size()]);
+
       if (request.getMessageFilters().isEmpty()) {
         // if no filters are applied we can optimize the query and request only the limited number of entries
-        this.clientManager.getLogClient().doLog(url, null, null, startRevision, endRevision, false, false,
+        this.clientManager.getLogClient().doLog(url, paths, null, startRevision, endRevision, false, false,
             request.getMaxResults(), handler);
       } else {
         // if filters are applied we need to request the whole log and filter afterwards
-        this.clientManager.getLogClient().doLog(url, null, null, startRevision, endRevision, false, false, -1, handler);
+        this.clientManager.getLogClient().doLog(url, paths, null, startRevision, endRevision, false, false, -1,
+            handler);
       }
 
       return handler.getHistory();
