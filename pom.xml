@@ -2,18 +2,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.itemis</groupId>
+    <groupId>io.github.mavenplugins</groupId>
     <artifactId>org-parent</artifactId>
     <version>1</version>
   </parent>
 
-  <groupId>com.itemis.maven.plugins</groupId>
   <artifactId>unleash-scm-provider-svn</artifactId>
   <version>2.1.1-SNAPSHOT</version>
 
   <name>Unleash SCM Provider SVN</name>
   <description>The SVN SCM provider for the Unleash Maven Plugin.</description>
-  <url>https://github.com/shillner/unleash-scm-provider-svn</url>
+  <url>https://github.com/mavenplugins/unleash-scm-provider-svn</url>
   <inceptionYear>2016</inceptionYear>
   
   <developers>
@@ -24,22 +23,31 @@
       <organizationUrl>https://itemis.com/</organizationUrl>
       <timezone>1</timezone>
     </developer>
+    <developer>
+      <id>mavenplugins</id>
+      <!-- Let Maven Central Search show 'Public Project' as known contributors tag -->
+      <name>Public Project</name>
+      <url>https://github.com/mavenplugins/unleash-scm-provider-svn/graphs/contributors</url>
+      <organization>mavenplugins</organization>
+      <organizationUrl>https://github.com/mavenplugins/</organizationUrl>
+      <timezone>1</timezone>
+    </developer>
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/shillner/unleash-scm-provider-svn.git</connection>
-    <url>https://github.com/shillner/unleash-scm-provider-svn</url>
+    <connection>scm:git:https://github.com/mavenplugins/unleash-scm-provider-svn.git</connection>
+    <url>https://github.com/mavenplugins/unleash-scm-provider-svn</url>
     <tag>HEAD</tag>
   </scm>
   
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/shillner/unleash-scm-provider-svn/issues</url>
+    <url>https://github.com/mavenplugins/unleash-scm-provider-svn/issues</url>
   </issueManagement>
 
   <properties>
     <version.guava>19.0</version.guava>
-    <version.java>1.6</version.java>
+    <version.java>1.8</version.java>
     <version.junit>4.12</version.junit>
     <version.junit-dataprovider>1.10.3</version.junit-dataprovider>
     <version.unleash-scm-provider-api>2.10.0</version.unleash-scm-provider-api>
@@ -53,7 +61,7 @@
       <version>${version.guava}</version>
     </dependency>
     <dependency>
-      <groupId>com.itemis.maven.plugins</groupId>
+      <groupId>io.github.mavenplugins</groupId>
       <artifactId>unleash-scm-provider-api</artifactId>
       <version>${version.unleash-scm-provider-api}</version>
     </dependency>
@@ -92,25 +100,4 @@
     </pluginManagement>
   </build>
   
-  <profiles>
-    <profile>
-      <id>disable-java8-doclint</id>
-      <activation>
-        <jdk>[1.8,)</jdk>
-      </activation>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-javadoc-plugin</artifactId>
-              <configuration>
-                <additionalparam>-Xdoclint:none</additionalparam>
-              </configuration>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-  </profiles>
 </project>
