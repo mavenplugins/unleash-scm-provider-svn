@@ -99,7 +99,7 @@ public class SVNUtil {
 
               boolean include = true;
               if (!onlyIncludeRelativePaths.isEmpty()) {
-                String relativePath = SVNUtil.this.workingDir.toURI().relativize(file.toURI()).toString();
+                String relativePath = new FileToWCRelativePath(SVNUtil.this.workingDir).apply(file);
                 if (relativePath.endsWith("/")) {
                   relativePath = relativePath.substring(0, relativePath.length() - 1);
                 }
@@ -161,7 +161,7 @@ public class SVNUtil {
   }
 
   public long getRemoteRevision(SVNURL remoteUrl) throws SVNException {
-    SVNRepository repository = clientManager.getRepositoryPool().createRepository(remoteUrl, true);
+    SVNRepository repository = this.clientManager.getRepositoryPool().createRepository(remoteUrl, true);
     SVNDirEntry info = repository.info(".", -1);
     return info.getRevision();
   }
