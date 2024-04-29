@@ -65,6 +65,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - TBD
 
 
+## [2.2.0]
+<!-- !!! Align version in badge URLs as well !!! -->
+[![2.2.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=2.2.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.2.0)
+
+### Summary
+- Fix file URI relativizing on Windows OS - according to [unleash-maven-plugin #8](https://github.com/mavenplugins/unleash-maven-plugin/issues/8)
+- Update dependency to `unleash-scm-provider-api 2.11.0`
+
+### Updates
+- FileToWCRelativePath.java:
+  - convert File URIs to lower case on Windows OS runtimes
+
+- SVNUtil.java:
+  - make use of FileToWCRelativePath.apply(File)
+    for URI relativizing
+
+- pom.xml:
+  - refer to `unleash-scm-provider-api 2.11.0`
+
+
 ## [2.1.0]
 <!-- !!! Align version in badge URLs as well !!! -->
 [![2.1.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=2.1.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.1.0)
@@ -95,5 +115,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - This is just a dummy placeholder to make the parser of GHCICD/release-notes-from-changelog@v1 happy!
 -->
 
-[Unreleased]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.1.0..HEAD
+[Unreleased]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.2.0..HEAD
+[2.2.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.1.0..v2.2.0
 [2.1.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/releases/tag/v2.1.0
