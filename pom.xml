@@ -4,11 +4,11 @@
   <parent>
     <groupId>io.github.mavenplugins</groupId>
     <artifactId>org-parent</artifactId>
-    <version>3</version>
+    <version>4</version>
   </parent>
 
   <artifactId>unleash-scm-provider-svn</artifactId>
-  <version>2.2.1-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
 
   <name>Unleash SCM Provider SVN</name>
   <description>The SVN SCM provider for the Unleash Maven Plugin.</description>
@@ -49,7 +49,12 @@
     <version.java>1.8</version.java>
     <javadoc.doclint>none</javadoc.doclint>
     <!-- UNLEASH -->
-    <version.unleash-scm-provider-api>2.11.0</version.unleash-scm-provider-api>
+    <version.unleash-maven-plugin>3.0.0</version.unleash-maven-plugin>
+    <!-- Resolve chicken/egg unleash by defining specific unleash commandline goal: -->
+    <version.unleash-maven-plugin.perform>2.11.0</version.unleash-maven-plugin.perform>
+    <unleash.goal>perform</unleash.goal>
+    <!-- This is considered by the reusable GH unleash action: -->
+    <unleash.cmdline.goal>${groupId.unleash-maven-plugin}:${artifactId.unleash-maven-plugin}:${version.unleash-maven-plugin.perform}:${unleash.goal}</unleash.cmdline.goal>
     <!-- 3rd PARTY -->
     <version.guava>19.0</version.guava>
     <version.svnkit>1.8.12</version.svnkit>
@@ -63,7 +68,7 @@
     <dependency>
       <groupId>${groupId.unleash-maven-plugin}</groupId>
       <artifactId>unleash-scm-provider-api</artifactId>
-      <version>${version.unleash-scm-provider-api}</version>
+      <version>${version.unleash-maven-plugin}</version>
     </dependency>
 
     <!-- 3rd PARTY DEPENDENCIES -->

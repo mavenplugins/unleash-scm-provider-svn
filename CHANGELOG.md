@@ -65,6 +65,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - TBD
 
 
+## [3.0.0]
+<!-- !!! Align version in badge URLs as well !!! -->
+[![3.0.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=3.0.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.0)
+
+### Summary
+- Update dependency `io.github.mavenplugins:cdi-plugin-utils:3.4.1` -> `io.github.mavenplugins:cdi-plugin-utils:4.0.0`
+  - => work for Java 8, 11, 17 and 21 by CDI WELD 4.0.3.Final with Jakarta Inject API
+
+### Compatibility
+- 👉 This release requires to be used with `unleash-maven-plugin >= v3.0.0` only! It will NOT work with former versions of `unleash-maven-plugin`<br>
+  Reason: CDI dependencies did have been changed from Javax to Jakarta EE
+
+### Updates
+- pom.xml:
+  - refer to `unleash-scm-provider-api 3.0.0`
+
+
 ## [2.2.0]
 <!-- !!! Align version in badge URLs as well !!! -->
 [![2.2.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=2.2.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.2.0)
