@@ -8,7 +8,7 @@
   </parent>
 
   <artifactId>unleash-scm-provider-svn</artifactId>
-  <version>3.0.0</version>
+  <version>3.0.1-SNAPSHOT</version>
 
   <name>Unleash SCM Provider SVN</name>
   <description>The SVN SCM provider for the Unleash Maven Plugin.</description>
@@ -37,7 +37,7 @@
   <scm>
     <connection>scm:git:https://github.com/mavenplugins/unleash-scm-provider-svn.git</connection>
     <url>https://github.com/mavenplugins/unleash-scm-provider-svn</url>
-    <tag>v3.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
