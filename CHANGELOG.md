@@ -132,6 +132,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - This is just a dummy placeholder to make the parser of GHCICD/release-notes-from-changelog@v1 happy!
 -->
 
-[Unreleased]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.2.0..HEAD
+[Unreleased]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v3.0.0..HEAD
+[3.0.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.2.0..v3.0.0
 [2.2.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.1.0..v2.2.0
 [2.1.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/releases/tag/v2.1.0
