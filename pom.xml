@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.github.mavenplugins</groupId>
     <artifactId>org-parent</artifactId>
-    <version>4</version>
+    <version>5</version>
   </parent>
 
   <artifactId>unleash-scm-provider-svn</artifactId>
@@ -49,9 +49,9 @@
     <version.java>1.8</version.java>
     <javadoc.doclint>none</javadoc.doclint>
     <!-- UNLEASH -->
-    <version.unleash-maven-plugin>3.0.0</version.unleash-maven-plugin>
+    <version.unleash-maven-plugin>3.0.1</version.unleash-maven-plugin>
     <!-- Resolve chicken/egg unleash by defining specific unleash commandline goal: -->
-    <version.unleash-maven-plugin.perform>2.11.0</version.unleash-maven-plugin.perform>
+    <version.unleash-maven-plugin.perform>3.0.0</version.unleash-maven-plugin.perform>
     <unleash.goal>perform</unleash.goal>
     <!-- This is considered by the reusable GH unleash action: -->
     <unleash.cmdline.goal>${groupId.unleash-maven-plugin}:${artifactId.unleash-maven-plugin}:${version.unleash-maven-plugin.perform}:${unleash.goal}</unleash.cmdline.goal>
@@ -69,6 +69,8 @@
       <groupId>${groupId.unleash-maven-plugin}</groupId>
       <artifactId>unleash-scm-provider-api</artifactId>
       <version>${version.unleash-maven-plugin}</version>
+      <!-- provided by the unleash-maven-plugin -->
+      <scope>provided</scope>
     </dependency>
 
     <!-- 3rd PARTY DEPENDENCIES -->
