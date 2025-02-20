@@ -37,25 +37,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   |                   |                                                                |       |
  [major.minor.micro]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/vM.N.u..vM.N.u
 -->
-<!--
 ## [Unreleased]
 
-### Additions
+### 🚨 Removed
 - TBD
 
-### Changes
+### 💥 Breaking
 - TBD
 
-### Deprecated
+### 📢 Deprecated
 - TBD
 
-###	Removals
+### 🚀 New Features
 - TBD
 
-### Fixes
+### 🐛 Fixes
 - TBD
 
-###	Security
+### ✨ Improvements
+- TBD
+
+### 🔧 Internal Changes
+- TBD
+
+### 🚦 Tests
+- TBD
+
+### 📦 Updates
+- TBD
+
+### 🔒 Security
+- TBD
+
+### 📝 Documentation Updates
 - TBD
 -->
 
@@ -63,6 +77,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changes
 - TBD
+
+
+## [3.0.2]
+<!-- !!! Align version in badge URLs as well !!! -->
+[![3.0.2 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=3.0.2)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.2)
+
+### Summary
+- Remove explicit dependency to `com.google.guava:guava`
+- No further functional or code change
+
+### 💥 Breaking
+- 👉 Use with `unleash-maven-plugin >= v3.2.1` only to comply with guava dependency provided through `unleash-scm-provider-api` by `cdi-plugin-utils`!
+
+### 📦 Updates
+- pom.xml:
+  - Remove explicit dependency to `com.google.guava:guava`
+  - Update `junit` to version `4.13.2`
 
 
 ## [3.0.1]
@@ -145,7 +176,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - This is just a dummy placeholder to make the parser of GHCICD/release-notes-from-changelog@v1 happy!
 -->
 
-[Unreleased]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v3.0.1..HEAD
+[Unreleased]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v3.0.2..HEAD
+[3.0.2]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v3.0.1..v3.0.2
 [3.0.1]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v3.0.0..v3.0.1
 [3.0.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.2.0..v3.0.0
 [2.2.0]: https://github.com/mavenplugins/unleash-scm-provider-svn/compare/v2.1.0..v2.2.0
