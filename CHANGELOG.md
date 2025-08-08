@@ -81,7 +81,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [3.0.2]
 <!-- !!! Align version in badge URLs as well !!! -->
-[![3.0.2 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=3.0.2)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.2)
+[![3.0.2 Badge](https://img.shields.io/maven-central/v/io.github.mavenplugins/unleash-scm-provider-svn?label=Maven%20Central&filter=3.0.2)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.2)
 
 ### Summary
 - Remove explicit dependency to `com.google.guava:guava`
@@ -98,7 +98,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [3.0.1]
 <!-- !!! Align version in badge URLs as well !!! -->
-[![3.0.1 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=3.0.1)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.1)
+[![3.0.1 Badge]https://img.shields.io/maven-central/v/io.github.mavenplugins/unleash-scm-provider-svn?label=Maven%20Central&filter=3.0.1)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.1)
 
 ### Summary
 - Update dependency `unleash-scm-provider-api` to scope `provided`
@@ -111,7 +111,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [3.0.0]
 <!-- !!! Align version in badge URLs as well !!! -->
-[![3.0.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=3.0.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.0)
+[![3.0.0 Badge](https://img.shields.io/maven-central/v/io.github.mavenplugins/unleash-scm-provider-svn?label=Maven%20Central&filter=3.0.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/3.0.0)
 
 ### Summary
 - Update dependency `io.github.mavenplugins:cdi-plugin-utils:3.4.1` -> `io.github.mavenplugins:cdi-plugin-utils:4.0.0`
@@ -128,7 +128,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [2.2.0]
 <!-- !!! Align version in badge URLs as well !!! -->
-[![2.2.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=2.2.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.2.0)
+[![2.2.0 Badge](https://img.shields.io/maven-central/v/io.github.mavenplugins/unleash-scm-provider-svn?label=Maven%20Central&filter=2.2.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.2.0)
 
 ### Summary
 - Fix file URI relativizing on Windows OS - according to [unleash-maven-plugin #8](https://github.com/mavenplugins/unleash-maven-plugin/issues/8)
@@ -148,7 +148,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [2.1.0]
 <!-- !!! Align version in badge URLs as well !!! -->
-[![2.1.0 Badge](https://img.shields.io/nexus/r/io.github.mavenplugins/unleash-scm-provider-svn?server=https://s01.oss.sonatype.org&label=Maven%20Central&queryOpt=:v=2.1.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.1.0)
+[![2.1.0 Badge](https://img.shields.io/maven-central/v/io.github.mavenplugins/unleash-scm-provider-svn?label=Maven%20Central&filter=2.1.0)](https://central.sonatype.com/artifact/io.github.mavenplugins/unleash-scm-provider-svn/2.1.0)
 
 ### Summary
 - Initial release of this artifact with new groupId `io.github.mavenplugins`
